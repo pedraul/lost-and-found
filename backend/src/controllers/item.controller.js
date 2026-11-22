@@ -9,7 +9,8 @@ const registerItem = async (req, res, next) => {
   try {
     const receiptFile = req.files?.receipt_image?.[0];
     const deviceFile = req.files?.device_image?.[0];
-    const publicUrl = (file) => file && `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
+    // Set by the upload middleware (Vercel Blob URL in production, /uploads/ locally).
+    const publicUrl = (file) => file && file.url;
     const receiptUrl = publicUrl(receiptFile);
     const deviceUrl = publicUrl(deviceFile);
     const itemData = {

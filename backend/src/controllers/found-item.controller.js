@@ -18,9 +18,10 @@ const reportFoundItem = async (req, res, next) => {
 
     const foundData = {
       ...req.body,
-      overall_image_url: `${req.protocol}://${req.get('host')}/uploads/${overallImage.filename}`,
+      // URLs set by the upload middleware (Vercel Blob in production, /uploads/ locally).
+      overall_image_url: overallImage.url,
       overall_file_name: overallImage.originalname,
-      serial_image_url: `${req.protocol}://${req.get('host')}/uploads/${serialImage.filename}`,
+      serial_image_url: serialImage.url,
       serial_file_name: serialImage.originalname
     };
     const result = await foundItemService.reportFoundItem(req.user, foundData);

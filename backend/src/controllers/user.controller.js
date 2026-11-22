@@ -47,8 +47,11 @@ const updateMe = async (req, res, next) => {
       }
     }
     if (req.file) {
-      // Store a portable upload path. The frontend proxy resolves it correctly on desktop and phones.
-      updateData.avatar_url = `/uploads/${req.file.filename}`;
+      // Locally store a portable /uploads/ path (the frontend proxy resolves it on
+      // desktop and phones); in production the file's Vercel Blob URL.
+      updateData.avatar_url = req.file.url.startsWith('http') && !req.file.url.includes('/uploads/')
+        ? req.file.url
+        : `/uploads/${req.file.filename}`;
     }
 
     if (updateData.email) {

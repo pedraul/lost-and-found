@@ -1,3 +1,5 @@
+import { compressFormData } from '../utils/compress-image';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export async function apiRequest(endpoint, options = {}) {
@@ -8,8 +10,12 @@ export async function apiRequest(endpoint, options = {}) {
     ...options.headers,
   };
 
+  // Uploads: shrink photos so the request stays under the host's body-size limit.
+  const body = options.body instanceof FormData ? await compressFormData(options.body) : options.body;
+
   const res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
+    body,
     headers,
     // Dashboards, item lists, and metrics must always reflect current database data.
     cache: options.cache || 'no-store',

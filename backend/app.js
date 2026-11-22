@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const crypto = require('crypto');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -8,6 +9,8 @@ const env = require('./src/config/env');
 const { notFound, errorHandler } = require('./src/middleware/error.middleware');
 const paymentController = require('./src/controllers/payment.controller');
 const { activityLogger } = require('./src/middleware/activity-log.middleware');
+const { sendPaymentReminders } = require('./src/services/payment-reminder.service');
+const { retryPendingPaymentConfirmations } = require('./src/services/payment-confirmation.service');
 
 // Initialize all model associations before route handlers execute.
 require('./src/models');
@@ -28,6 +31,28 @@ app.use(cors());
 // Paypack signs the exact raw webhook body; this route must precede JSON parsing.
 app.head('/api/payments/paypack/webhook', (req, res) => res.sendStatus(200));
 app.post('/api/payments/paypack/webhook', express.raw({ type: 'application/json' }), paymentController.paypackWebhook);
+
+// Scheduled jobs. On a normal server src/server.js runs these on timers; on
+// Vercel (serverless, no timers) Vercel Cron calls these URLs instead — see
+// backend/vercel.json. Vercel sends "Authorization: Bearer $CRON_SECRET".
+const cronAuthorized = (req) => {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return false;
+  const expected = Buffer.from(`Bearer ${secret}`);
+  const received = Buffer.from(req.get('authorization') || '');
+  return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+};
+const cronJob = (job) => async (req, res, next) => {
+  if (!cronAuthorized(req)) return res.status(401).json({ success: false, message: 'Unauthorized' });
+  try {
+    const processed = await job();
+    res.status(200).json({ success: true, processed });
+  } catch (error) {
+    next(error);
+  }
+};
+app.get('/api/cron/payment-reminders', cronJob(sendPaymentReminders));
+app.get('/api/cron/payment-confirmations', cronJob(retryPendingPaymentConfirmations));
 
 // Security headers
 app.use(helmet());

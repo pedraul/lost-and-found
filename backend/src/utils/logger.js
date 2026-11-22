@@ -27,16 +27,19 @@ const format = winston.format.combine(
   )
 );
 
-const transports = [
-  new winston.transports.Console(),
-  new winston.transports.File({
-    filename: 'logs/error.log',
-    level: 'error'
-  }),
-  new winston.transports.File({
-    filename: 'logs/all.log'
-  })
-];
+// On Vercel the filesystem is read-only; console output goes to Vercel's log viewer.
+const transports = process.env.VERCEL
+  ? [new winston.transports.Console()]
+  : [
+    new winston.transports.Console(),
+    new winston.transports.File({
+      filename: 'logs/error.log',
+      level: 'error'
+    }),
+    new winston.transports.File({
+      filename: 'logs/all.log'
+    })
+  ];
 
 const logger = winston.createLogger({
   level: env.nodeEnv === 'development' ? 'debug' : 'info',

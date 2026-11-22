@@ -1,3 +1,7 @@
+// Backend origin, derived from the public API URL (e.g. https://api.example.com/api -> https://api.example.com).
+// Locally this is http://localhost:5000; on Vercel set NEXT_PUBLIC_API_URL to the deployed backend.
+const apiOrigin = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -5,8 +9,10 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        // Files stored by the backend's local uploads folder (development and
+        // older records). New uploads in production are full Vercel Blob URLs.
         source: '/uploads/:path*',
-        destination: 'http://localhost:5000/uploads/:path*',
+        destination: `${apiOrigin}/uploads/:path*`,
       },
     ];
   },
