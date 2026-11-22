@@ -1,0 +1,33 @@
+# --- Secrets: never commit. Copy the .env.example files instead. ---
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# --- Dependencies ---
+node_modules/
+
+# --- Build output ---
+frontend/.next/
+frontend/.next-dev/
+frontend/out/
+dist/
+build/
+coverage/
+
+# --- Runtime data: user uploads (personal photos, receipts, avatars) and logs ---
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/logs/
+*.log
+npm-debug.log*
+
+# --- Local browser profiles used for screenshot/responsive testing (cookies, saved logins) ---
+.responsive-*/
+
+# --- Editor / OS / tooling ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.claude/settings.local.json
