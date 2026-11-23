@@ -8,7 +8,49 @@ const StatusChangeLog = require('../models/StatusChangeLog');
 const { generateVerificationCode, hashVerificationCode } = require('../utils/verification-code');
 const { generateItemVerificationQR } = require('../utils/qr-code');
 const AppError = require('../utils/appError');
+const { CATEGORIES, ITEM_TYPES_BY_NAME } = require('../config/item-catalog');
 const { requireActiveSubscription, startPaymentTrial } = require('./subscription.service');
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Find the device type for a registration. Uses device_type_id when it is a
+ * known id; otherwise falls back to device_type_name (sent by the form), and
+ * creates that type from the item catalog if the database does not have it.
+ */
+const resolveDeviceType = async ({ device_type_id: id, device_type_name: name }) => {
+  if (id && UUID_PATTERN.test(String(id))) {
+    const byId = await DeviceType.findByPk(id);
+    if (byId) return byId;
+  }
+  if (!name) return null;
+
+  const byName = await DeviceType.findOne({ where: { name: String(name) } });
+  if (byName) return byName;
+
+  const definition = ITEM_TYPES_BY_NAME.get(String(name));
+  if (!definition) return null;
+
+  const [category] = await Category.findOrCreate({
+    where: { name: definition.category },
+    defaults: { name: definition.category, ...CATEGORIES[definition.category] }
+  });
+  const [created] = await DeviceType.findOrCreate({
+    where: { name: definition.name },
+    defaults: {
+      category_id: category.id,
+      name: definition.name,
+      display_name: definition.display_name,
+      icon: definition.icon,
+      description: definition.display_name,
+      required_fields: definition.required_fields,
+      has_serial_number: true,
+      display_order: definition.display_order,
+      is_active: true
+    }
+  });
+  return created;
+};
 
 /**
  * Register a new item
@@ -19,11 +61,12 @@ const registerItem = async (user, itemData) => {
   requireActiveSubscription(user);
 
   // 1) Validate device type configuration
-  const deviceType = await DeviceType.findByPk(itemData.device_type_id);
+  const deviceType = await resolveDeviceType(itemData);
 
   if (!deviceType) {
     throw new AppError('Device type not found', 404);
   }
+  itemData.device_type_id = deviceType.id;
 
   if (!deviceType.is_active) {
     throw new AppError('This device type is not available for registration', 400);
@@ -343,6 +386,7 @@ const findByIdentifier = async (identifier, type) => {
 
 module.exports = {
   registerItem,
+  resolveDeviceType,
   getMyItems,
   getPublicLostItems,
   getItemById,

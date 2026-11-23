@@ -456,7 +456,15 @@ export default function RegisterItemPage() {
 
     try {
       const payload = new FormData();
-      Object.entries(formData).forEach(([field, value]) => {
+      // Resolve the id now (the type list may have loaded after the click) and
+      // always send the type name so the backend can find or create the type.
+      const dbDeviceType = deviceTypes.find((dt) => dt.name === selectedDeviceName);
+      const submission = {
+        ...formData,
+        device_type_id: dbDeviceType?.id || formData.device_type_id,
+        device_type_name: selectedDeviceName,
+      };
+      Object.entries(submission).forEach(([field, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
           payload.append(field, value);
         }
