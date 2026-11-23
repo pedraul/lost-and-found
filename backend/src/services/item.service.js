@@ -68,6 +68,12 @@ const registerItem = async (user, itemData) => {
   }
   itemData.device_type_id = deviceType.id;
 
+  // registered_items.model is required, but document forms (passport,
+  // national ID) have no model field and it can be left blank elsewhere.
+  if (!itemData.model || !String(itemData.model).trim()) {
+    itemData.model = deviceType.display_name;
+  }
+
   if (!deviceType.is_active) {
     throw new AppError('This device type is not available for registration', 400);
   }

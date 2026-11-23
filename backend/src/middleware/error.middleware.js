@@ -47,6 +47,7 @@ const errorHandler = (err, req, res, next) => {
   if (err.name === 'SequelizeValidationError') {
     err.statusCode = 400;
     err.message = err.errors.map(e => e.message).join(', ');
+    err.isOperational = true; // safe to show: names the field that failed
   }
 
   // Handle Joi validation errors
