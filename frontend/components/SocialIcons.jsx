@@ -9,9 +9,9 @@ const socialPlatforms = [
   { name: 'Gmail', href: 'https://mail.google.com/mail/?view=cm&to=barflow01%40gmail.com', icon: Mail, glyph: null },
 ];
 
-export default function SocialIcons() {
+export default function SocialIcons({ className = 'gap-3' }) {
   return (
-    <div className="flex w-fit flex-row items-center gap-3" role="group" aria-label="Social media">
+    <div className={`flex w-fit max-w-full flex-row flex-wrap items-center ${className}`} role="group" aria-label="Social media">
       {socialPlatforms.map(({ name, href, icon: Icon, glyph }) => (
         <a
           key={name}
