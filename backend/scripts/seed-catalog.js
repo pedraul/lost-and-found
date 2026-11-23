@@ -23,7 +23,9 @@ const itemTypes = [
   ['vehicles', 'motorcycle', 'Motorcycle', '🏍️', ['vin_number', 'license_plate']],
   ['vehicles', 'bicycle', 'Bicycle', '🚴', ['serial_number', 'frame_size']],
   ['documents', 'passport', 'Passport', '📕', ['passport_number']],
-  ['documents', 'id_card', 'ID Card', '🪪', ['id_number']]
+  ['documents', 'id_card', 'ID Card', '🪪', ['id_number']],
+  // The registration form offers "National ID" (frontend DEVICE_TYPE_FORMS.national_id).
+  ['documents', 'national_id', 'National ID', '🪪', ['id_number']]
   , ['electronics', 'desktop_computer', 'Desktop Computer', 'Computer', ['serial_number', 'model']],
   ['electronics', 'smart_tv', 'Smart TV', 'TV', ['serial_number', 'model']],
   ['electronics', 'gaming_console', 'Gaming Console', 'Game', ['serial_number', 'model']],
