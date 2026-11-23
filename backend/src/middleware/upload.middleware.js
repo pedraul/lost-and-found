@@ -16,7 +16,12 @@ const { AppError } = require('./error.middleware');
  * `file.filename`.
  */
 
-const useBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+// A connected Blob store provides BLOB_READ_WRITE_TOKEN and/or BLOB_STORE_ID
+// (the SDK can authenticate with the store id via Vercel's OIDC token).
+const blobConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+// Vercel's filesystem is read-only, so never fall back to local disk there.
+const onVercel = Boolean(process.env.VERCEL);
+const useBlob = blobConfigured || onVercel;
 const uploadDir = path.resolve(__dirname, '../../', env.upload.uploadDir);
 
 const parseSize = (value) => {
@@ -48,6 +53,9 @@ const storedName = (file) => {
 const saveFile = async (file, req) => {
   const filename = storedName(file);
   if (useBlob) {
+    if (!blobConfigured) {
+      throw new Error('file storage is not configured on this deployment. Connect a Vercel Blob store to the backend project and redeploy.');
+    }
     const { put } = require('@vercel/blob');
     // Not under "uploads/": the frontend rewrites /uploads/ paths to the API.
     const blob = await put(`files/${filename}`, file.buffer, {
